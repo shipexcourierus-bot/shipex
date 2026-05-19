@@ -1757,6 +1757,8 @@ footer {
   .section-title { font-size: clamp(1.5rem, 5vw, 2rem); }
   .contact-info h2 { font-size: clamp(1.5rem, 5vw, 2rem); }
   .track-banner-text h2 { font-size: clamp(1.5rem, 5vw, 2rem); }
+   .track-banner-text { max-width: 90%;}
+  .track-banner-stat { font-size: 1.6rem;}
 }
 
 @media (max-width: 480px) {
