@@ -1761,7 +1761,7 @@ footer {
   .track-banner-stat { font-size: 1.6rem;}
 
    /* news letter */
-  .newsletter-form {max-width: 90%;}
+  .newsletter-form {max-width: 100%;}
   .newsletter-form .btn { padding: 14px 16px; font-size: 0.75rem;}
 }
 
