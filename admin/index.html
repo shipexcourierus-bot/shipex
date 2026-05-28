@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="40x40" href="../images/favicon.png">
+  <title>Admin Dashboard — ShipEx Courier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/admin.css" />
+  <!-- email js -->
+   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script>emailjs.init('hO5nniWy-LPjXZSc6');</script>
+</head>
+<body>
+
+<!-- ════════════ AUTH SCREEN ════════════ -->
+<div id="authScreen" class="auth-page">
+  <div class="auth-bg"></div>
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-icon">🚀</div>
+      <h2>ShipEx Courier Admin</h2>
+      <p>Sign in to your dashboard</p>
+    </div>
+
+    <div class="auth-error" id="authError"></div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input class="form-input" type="email" id="adminEmail" placeholder="admin@shipex.com" required />
+      </div>
+      <div class="form-group" style="margin-bottom:28px">
+        <label>Password</label>
+        <div style="position:relative">
+          <input class="form-input" type="password" id="adminPassword" placeholder="••••••••••" required style="padding-right:44px" />
+          <button type="button" onclick="togglePw()" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.4);font-size:0.9rem" id="pwEye">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:16px">
+        <i class="fas fa-lock-open"></i> Sign In to Dashboard
+      </button>
+    </form>
+
+    <p style="text-align:center;margin-top:24px;font-size:0.78rem;color:rgba(255,255,255,0.3)">
+      <i class="fas fa-shield-check" style="margin-right:4px;color:var(--success)"></i>
+      Admin access only · Protected by Firebase Auth
+    </p>
+    <p style="text-align:center;margin-top:10px;font-size:0.78rem">
+      <a href="../index.html" style="color:rgba(255,255,255,0.4)">← Back to website</a>
+    </p>
+  </div>
+</div>
+
+<!-- ════════════ DASHBOARD ════════════ -->
+<div id="dashboardScreen" class="dashboard-layout" style="display:none">
+
+  <!-- Sidebar overlay (mobile) -->
+  <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🚀</div>
+      ShipEx Courier
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Main</div>
+
+      <div class="nav-item active" data-panel="overview">
+        <i class="fas fa-chart-pie"></i> Overview
+      </div>
+      <div class="nav-item" data-panel="shipments">
+        <i class="fas fa-boxes-stacked"></i> All Shipments
+      </div>
+      <div class="nav-item" data-panel="new-shipment">
+        <i class="fas fa-plus-circle"></i> New Shipment
+      </div>
+
+      <div class="sidebar-section-label" style="margin-top:8px">Operations</div>
+
+      <div class="nav-item" data-panel="tracking">
+        <i class="fas fa-satellite-dish"></i> Live Tracking
+      </div>
+      <div class="nav-item" data-panel="chats">
+        <i class="fas fa-comments"></i> Customer Chats
+        <span class="nav-badge" id="chatBadge" style="display:none">0</span>
+      </div>
+      <div class="nav-item" data-panel="analytics">
+        <i class="fas fa-chart-line"></i> Analytics
+      </div>
+
+      <div class="sidebar-section-label" style="margin-top:8px">System</div>
+
+      <div class="nav-item" data-panel="settings">
+        <i class="fas fa-gear"></i> Settings
+      </div>
+      <div class="nav-item" id="logoutBtn" style="color:rgba(239,68,68,0.7)">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </div>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-avatar" id="adminAvatar">A</div>
+        <div>
+          <div class="user-name" id="adminName">Admin</div>
+          <div class="user-role">Super Admin</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <button id="sidebarToggle" class="topbar-icon-btn" style="display:none">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div>
+          <div class="page-title" id="pageTitle">Dashboard Overview</div>
+          <div class="breadcrumb">ShipEx Courier / <span id="breadcrumb">Overview</span></div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-icon-btn theme-btn" title="Toggle theme"><i class="fas fa-moon"></i></button>
+        <button class="topbar-icon-btn" title="Notifications" onclick="navigateTo('chats')" style="position:relative">
+          <i class="fas fa-bell"></i>
+          <div class="notif-dot" id="notifDot" style="display:none"></div>
+        </button>
+        <a href="../tracking/index.html" target="_blank" class="btn btn-outline btn-sm">
+          <i class="fas fa-external-link-alt"></i> View Site
+        </a>
+        <button class="btn btn-primary btn-sm" onclick="navigateTo('new-shipment')">
+          <i class="fas fa-plus"></i> New Shipment
+        </button>
+      </div>
+    </div>
+
+    <!-- Page Content -->
+    <div class="page-content">
+
+      <!-- ── OVERVIEW PANEL ── -->
+      <div class="dashboard-panel active" id="panel-overview">
+        <!-- Stats Row -->
+        <div class="stats-row">
+          <div class="stat-widget">
+            <div>
+              <div class="stat-widget-label">Total Shipments</div>
+              <div class="stat-widget-num" id="statTotal">—</div>
+              <div class="stat-widget-change"><i class="fas fa-arrow-up"></i> 12% this month</div>
+            </div>
+            <div class="stat-widget-icon icon-blue"><i class="fas fa-boxes-stacked"></i></div>
+          </div>
+          <div class="stat-widget">
+            <div>
+              <div class="stat-widget-label">Delivered</div>
+              <div class="stat-widget-num" id="statDelivered">—</div>
+              <div class="stat-widget-change"><i class="fas fa-arrow-up"></i> 8% this month</div>
+            </div>
+            <div class="stat-widget-icon icon-green"><i class="fas fa-check-circle"></i></div>
+          </div>
+          <div class="stat-widget">
+            <div>
+              <div class="stat-widget-label">In Transit</div>
+              <div class="stat-widget-num" id="statTransit">—</div>
+              <div class="stat-widget-change"><i class="fas fa-circle"></i> Active now</div>
+            </div>
+            <div class="stat-widget-icon icon-amber"><i class="fas fa-truck"></i></div>
+          </div>
+          <div class="stat-widget">
+            <div>
+              <div class="stat-widget-label">Pending</div>
+              <div class="stat-widget-num" id="statPending">—</div>
+              <div class="stat-widget-change down"><i class="fas fa-arrow-down"></i> Needs attention</div>
+            </div>
+            <div class="stat-widget-icon" style="background:rgba(239,68,68,0.1);color:var(--danger)"><i class="fas fa-clock"></i></div>
+          </div>
+        </div>
+
+        <!-- Charts + Recent -->
+        <div class="dashboard-grid-2">
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <div class="panel-card-title">Monthly Deliveries</div>
+              <span class="status-badge status-delivered">2025</span>
+            </div>
+            <div class="panel-card-body">
+              <div class="chart-container">
+                <canvas id="deliveryChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <div class="panel-card-title">Status Breakdown</div>
+              <span class="status-badge status-processing">Live</span>
+            </div>
+            <div class="panel-card-body">
+              <div class="chart-container">
+                <canvas id="statusChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Shipments -->
+        <div class="panel-card" style="margin-top:20px">
+          <div class="panel-card-header">
+            <div class="panel-card-title">Recent Shipments</div>
+            <button class="btn btn-outline btn-sm" onclick="navigateTo('shipments')">View All</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Tracking ID</th>
+                  <th>Sender</th>
+                  <th>Receiver</th>
+                  <th>Current Location</th>
+                  <th>Status</th>
+                  <th>Est. Delivery</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="recentShipmentsTbody">
+                <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-400)">
+                  Loading shipments...
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ALL SHIPMENTS PANEL ── -->
+      <div class="dashboard-panel" id="panel-shipments">
+        <div class="panel-card">
+          <div class="panel-card-header">
+            <div class="panel-card-title">All Shipments</div>
+            <button class="btn btn-primary btn-sm" onclick="navigateTo('new-shipment')">
+              <i class="fas fa-plus"></i> New Shipment
+            </button>
+          </div>
+          <div class="table-toolbar">
+            <div class="search-field">
+              <i class="fas fa-search"></i>
+              <input type="text" id="shipmentSearch" placeholder="Search by ID, sender, receiver..." />
+            </div>
+            <select class="filter-select" id="statusFilter">
+              <option value="">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="processing">Processing</option>
+              <option value="in_transit">In Transit</option>
+              <option value="out_delivery">Out for Delivery</option>
+              <option value="delivered">Delivered</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="exportShipments()">
+              <i class="fas fa-download"></i> Export
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Tracking ID</th>
+                  <th>Sender</th>
+                  <th>Receiver</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                  <th>Est. Delivery</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="allShipmentsTbody">
+                <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-400)">
+                  No shipments found. <a href="#" onclick="navigateTo('new-shipment')" style="color:var(--blue-light)">Create one</a>.
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── NEW SHIPMENT PANEL ── -->
+      <div class="dashboard-panel" id="panel-new-shipment">
+        <div class="shipment-form-wrap">
+
+          <!-- Generated ID display -->
+          <div class="tracking-id-generated" id="generatedTrackingId">
+            <i class="fas fa-check-circle"></i>
+            <div>
+              <div class="tracking-id-gen-text">Tracking ID Generated</div>
+              <div class="tracking-id-gen-value" id="trackingIdValue">—</div>
+            </div>
+          </div>
+
+          <form id="shipmentForm">
+            <!-- Sender -->
+            <div class="form-section">
+              <div class="form-section-header">
+                <i class="fas fa-user-circle"></i> Sender Information
+              </div>
+              <div class="form-section-body">
+                <div class="form-row-2">
+                  <div class="admin-form-group">
+                    <label>Sender Full Name *</label>
+                    <input class="admin-input" id="senderName" placeholder="John Doe" required />
+                  </div>
+                  <div class="admin-form-group">
+                    <label>Sender Address *</label>
+                    <input class="admin-input" id="senderAddress" placeholder="City, Country" required />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Receiver -->
+            <div class="form-section">
+              <div class="form-section-header">
+                <i class="fas fa-map-marker-alt"></i> Receiver Information
+              </div>
+              <div class="form-section-body">
+                <div class="form-row-2">
+                  <div class="admin-form-group">
+                    <label>Receiver Full Name *</label>
+                    <input class="admin-input" id="receiverName" placeholder="Jane Smith" required />
+                  </div>
+                  <div class="admin-form-group">
+                    <label>Receiver Address *</label>
+                    <input class="admin-input" id="receiverAddress" placeholder="City, Country" required />
+                  </div>
+                </div>
+                <div class="admin-form-group">
+                  <label>Final Destination</label>
+                  <input class="admin-input" id="destination" placeholder="Final delivery destination" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Package -->
+            <div class="form-section">
+              <div class="form-section-header">
+                <i class="fas fa-box"></i> Package Details
+              </div>
+              <div class="form-section-body">
+                <div class="form-row-3">
+                  <div class="admin-form-group">
+                    <label>Package Description *</label>
+                    <input class="admin-input" id="packageDesc" placeholder="e.g. Electronics — Laptop" required />
+                  </div>
+                  <div class="admin-form-group">
+                    <label>Weight</label>
+                    <input class="admin-input" id="weight" placeholder="e.g. 2.5 kg" />
+                  </div>
+                  <div class="admin-form-group">
+                    <label>Shipping Fee</label>
+                    <input class="admin-input" id="shippingFee" placeholder="e.g. ₦8,500" />
+                  </div>
+                </div>
+                <div class="form-row-3">
+                  <div class="admin-form-group">
+                    <label>Delivery Type *</label>
+                    <select class="admin-input admin-select" id="deliveryType" required>
+                      <option value="">Select type</option>
+                      <option value="Express">Express (1–2 days)</option>
+                      <option value="Standard">Standard (3–5 days)</option>
+                      <option value="Economy">Economy (7–14 days)</option>
+                      <option value="International">International Freight</option>
+                    </select>
+                  </div>
+                  <div class="admin-form-group">
+                    <label>Est. Delivery Date</label>
+                    <input class="admin-input" type="date" id="estDelivery" />
+                  </div>
+                  <div class="admin-form-group">
+                    <label>Carrier / Agent</label>
+                    <input class="admin-input" id="carrierName" placeholder="ShipEx Courier Express" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Status & Location -->
+            <div class="form-section">
+              <div class="form-section-header">
+                <i class="fas fa-satellite-dish"></i> Status & Location
+              </div>
+              <div class="form-section-body">
+                <div class="form-row-2">
+                  <div class="admin-form-group">
+                    <label>Current Location <span style="font-size:0.72rem;color:var(--amber)">(auto-filled from checkpoints)</span></label>
+                    <select class="admin-input admin-select" id="currentLocation">
+                      <option value="">— Add checkpoints first —</option>
+                    </select>
+                  </div>
+                  <div class="admin-form-group">
+                    <label>Shipment Status *</label>
+                    <select class="admin-input admin-select" id="shipmentStatus" required>
+                      <option value="pending">Pending</option>
+                      <option value="processing">Processing</option>
+                      <option value="in_transit">In Transit</option>
+                      <option value="out_delivery">Out for Delivery</option>
+                      <option value="delivered">Delivered</option>
+                      <option value="failed">Failed / Returned</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Checkpoints -->
+            <div class="form-section">
+              <div class="form-section-header">
+                <i class="fas fa-route"></i> Transit Checkpoints
+                <button type="button" id="addCheckpointBtn" class="btn btn-outline btn-sm" style="margin-left:auto">
+                  <i class="fas fa-plus"></i> Add Checkpoint
+                </button>
+              </div>
+              <div class="form-section-body">
+                <div class="checkpoints-list" id="checkpointsList">
+                  <p style="color:var(--gray-400);font-size:0.88rem;padding:8px 0">No checkpoints added yet. Add transit stops to build the package journey.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-save"></i> Save Shipment
+              </button>
+              <button type="button" class="btn btn-outline btn-lg" onclick="resetForm()">
+                <i class="fas fa-rotate-left"></i> Reset
+              </button>
+              <button type="button" class="btn btn-outline btn-lg" onclick="navigateTo('shipments')">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ── TRACKING PANEL ── -->
+      <div class="dashboard-panel" id="panel-tracking">
+        <div class="panel-card" style="margin-bottom:20px">
+          <div class="panel-card-header">
+            <div class="panel-card-title">Live Shipment Tracking</div>
+          </div>
+          <div class="panel-card-body">
+            <div style="display:flex;gap:12px;margin-bottom:20px">
+              <div class="search-field" style="max-width:400px;flex:1">
+                <i class="fas fa-search"></i>
+                <input type="text" id="adminTrackInput" placeholder="Enter tracking ID..." />
+              </div>
+              <button class="btn btn-primary" onclick="adminTrack()">
+                <i class="fas fa-search"></i> Track
+              </button>
+              <button class="btn btn-outline" onclick="window.open('../tracking/index.html','_blank')">
+                Open Tracking Page
+              </button>
+            </div>
+            <div id="adminTrackResult" style="color:var(--gray-400);font-size:0.9rem;padding:40px;text-align:center">
+              <i class="fas fa-satellite-dish" style="font-size:2.5rem;display:block;margin-bottom:16px;opacity:0.3"></i>
+              Enter a tracking ID above to view shipment details
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CHATS PANEL ── -->
+      <div class="dashboard-panel" id="panel-chats">
+        <div class="admin-chat-layout">
+          <!-- Chat List -->
+          <div class="chat-list">
+            <div class="chat-list-header">
+              <h3>Customer Chats</h3>
+              <div class="search-field" style="max-width:100%">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search chats..." id="chatSearch" />
+              </div>
+            </div>
+            <div class="chat-list-body" id="adminChatList">
+              <p style="text-align:center;color:var(--gray-400);padding:40px 20px;font-size:0.85rem">
+                No customer chats yet.
+              </p>
+            </div>
+          </div>
+
+          <!-- Chat Window -->
+          <div class="admin-chat-window">
+            <div class="admin-chat-header">
+              <div class="admin-chat-user" id="adminChatUserInfo">
+                <h4>Select a chat</h4>
+                <span>Choose a conversation from the left</span>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button id="resolveBtn" class="btn btn-outline btn-sm" style="display:none">
+                  <i class="fas fa-check"></i> Mark Resolved
+                </button>
+              </div>
+            </div>
+            <div class="admin-chat-messages" id="adminChatMessages">
+              <div style="text-align:center;margin:auto;color:var(--gray-400);font-size:0.88rem;padding:60px 20px">
+                <i class="fas fa-comments" style="font-size:2.5rem;display:block;margin-bottom:16px;opacity:0.3"></i>
+                Select a conversation to view messages
+              </div>
+            </div>
+            <div class="admin-chat-input-area">
+              <textarea class="admin-chat-input" id="adminChatInput" placeholder="Type a reply..." rows="1"></textarea>
+              <button id="adminChatSend" class="btn btn-primary btn-sm">
+                <i class="fas fa-paper-plane"></i> Send
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ANALYTICS PANEL ── -->
+      <div class="dashboard-panel" id="panel-analytics">
+        <div class="stats-row" style="margin-bottom:20px">
+          <div class="stat-widget">
+            <div>
+              <div class="stat-widget-label">Revenue (Month)</div>
+              <div class="stat-widget-num">₦4.2M</div>
+              <div class="stat-widget-change"><i class="fas fa-arrow-up"></i> 18%</div>
+            </div>
+            <div class="stat-widget-icon icon-amber"><i class="fas fa-naira-sign"></i></div>
+          </div>
+          <div class="stat-widget">
+            <div>
+              <div class="stat-widget-label">Avg Delivery Time</div>
+              <div class="stat-widget-num">1.8d</div>
+              <div class="stat-widget-change"><i class="fas fa-arrow-down"></i> 0.3d faster</div>
+            </div>
+            <div class="stat-widget-icon icon-blue"><i class="fas fa-stopwatch"></i></div>
+          </div>
+          <div class="stat-widget">
+            <div>
+              <div class="stat-widget-label">Customer Rating</div>
+              <div class="stat-widget-num">4.9★</div>
+              <div class="stat-widget-change"><i class="fas fa-arrow-up"></i> 0.1 this week</div>
+            </div>
+            <div class="stat-widget-icon icon-green"><i class="fas fa-star"></i></div>
+          </div>
+          <div class="stat-widget">
+            <div>
+              <div class="stat-widget-label">Chats Resolved</div>
+              <div class="stat-widget-num" id="statChats">—</div>
+              <div class="stat-widget-change"><i class="fas fa-circle"></i> this month</div>
+            </div>
+            <div class="stat-widget-icon icon-blue"><i class="fas fa-headset"></i></div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid-2">
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <div class="panel-card-title">Delivery Trends</div>
+            </div>
+            <div class="panel-card-body">
+              <div class="chart-container" style="height:280px">
+                <canvas id="deliveryChart2"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <div class="panel-card-title">Top Routes</div>
+            </div>
+            <div class="panel-card-body">
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="font-size:0.88rem;font-weight:600;color:var(--navy)">Lagos → Abuja</div>
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:120px;height:6px;background:var(--gray-200);border-radius:3px;overflow:hidden"><div style="width:78%;height:100%;background:var(--blue);border-radius:3px"></div></div>
+                    <span style="font-size:0.8rem;color:var(--gray-600)">78%</span>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="font-size:0.88rem;font-weight:600;color:var(--navy)">Lagos → London</div>
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:120px;height:6px;background:var(--gray-200);border-radius:3px;overflow:hidden"><div style="width:55%;height:100%;background:var(--amber);border-radius:3px"></div></div>
+                    <span style="font-size:0.8rem;color:var(--gray-600)">55%</span>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="font-size:0.88rem;font-weight:600;color:var(--navy)">Abuja → Port Harcourt</div>
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:120px;height:6px;background:var(--gray-200);border-radius:3px;overflow:hidden"><div style="width:42%;height:100%;background:var(--success);border-radius:3px"></div></div>
+                    <span style="font-size:0.8rem;color:var(--gray-600)">42%</span>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="font-size:0.88rem;font-weight:600;color:var(--navy)">Lagos → New York</div>
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:120px;height:6px;background:var(--gray-200);border-radius:3px;overflow:hidden"><div style="width:30%;height:100%;background:#8B5CF6;border-radius:3px"></div></div>
+                    <span style="font-size:0.8rem;color:var(--gray-600)">30%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SETTINGS PANEL ── -->
+      <div class="dashboard-panel" id="panel-settings">
+        <div class="form-section" style="max-width:640px">
+          <div class="form-section-header">
+            <i class="fas fa-gear"></i> Company Settings
+          </div>
+          <div class="form-section-body">
+            <div class="admin-form-group">
+              <label>Company Name</label>
+              <input class="admin-input" value="ShipEx Courier Logistics Ltd" />
+            </div>
+            <div class="admin-form-group">
+              <label>Support Email</label>
+              <input class="admin-input" type="email" value="support@shipex.com" />
+            </div>
+            <div class="admin-form-group">
+              <label>Support Phone</label>
+              <input class="admin-input" value="+1 (800) 794-SHIP" />
+            </div>
+            <div class="admin-form-group">
+              <label>Default Carrier</label>
+              <input class="admin-input" value="ShipEx Courier Express" />
+            </div>
+            <div class="admin-form-group">
+              <label>Notification Email</label>
+              <input class="admin-input" type="email" placeholder="admin@shipex.com" />
+            </div>
+            <div style="display:flex;gap:12px;margin-top:8px">
+              <button class="btn btn-primary" onclick="showToastGlobal('Settings saved!')">
+                <i class="fas fa-save"></i> Save Settings
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section" style="max-width:640px;margin-top:20px">
+          <div class="form-section-header">
+            <i class="fas fa-shield-halved"></i> Firebase & Integrations
+          </div>
+          <div class="form-section-body">
+            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius-sm);padding:20px;margin-bottom:20px">
+              <div style="font-weight:600;color:var(--amber-dark);margin-bottom:8px;font-size:0.9rem"><i class="fas fa-triangle-exclamation" style="margin-right:6px"></i>Firebase Configuration Required</div>
+              <p style="font-size:0.85rem;color:var(--gray-600);line-height:1.7;margin:0">
+                Open <code style="background:rgba(0,0,0,0.06);padding:2px 6px;border-radius:4px">firebase/firebase-init.js</code> and replace the placeholder values with your Firebase project credentials from the <a href="https://console.firebase.google.com" target="_blank" style="color:var(--blue-light)">Firebase Console</a>.
+              </p>
+            </div>
+            <div class="admin-form-group">
+              <label>EmailJS Service ID</label>
+              <input class="admin-input" placeholder="YOUR_EMAILJS_SERVICE_ID" />
+            </div>
+            <div class="admin-form-group">
+              <label>EmailJS Template ID</label>
+              <input class="admin-input" placeholder="YOUR_EMAILJS_TEMPLATE_ID" />
+            </div>
+            <button class="btn btn-outline" onclick="showToastGlobal('Saved! Add real credentials in firebase-init.js','warning')">
+              <i class="fas fa-save"></i> Save Integration Keys
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-content -->
+  </div><!-- /main-content -->
+</div><!-- /dashboard-layout -->
+
+<!-- ── ADD CHECKPOINT MODAL ── -->
+<div id="addCpModal" class="modal-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('addCpModal').classList.remove('open')">
+      <i class="fas fa-times"></i>
+    </button>
+    <h3>Add Checkpoint</h3>
+    <p>Add a transit stop or delivery checkpoint to the shipment journey.</p>
+    <form id="cpForm">
+      <div class="form-group">
+        <label>Location Name *</label>
+        <input class="form-input" id="cpLocation" placeholder="e.g. Lagos Sorting Facility" required />
+      </div>
+      <div class="form-group">
+        <label>Note / Description</label>
+        <input class="form-input" id="cpNote" placeholder="e.g. Package received and scanned" />
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select class="form-input" id="cpStatus">
+          <option value="pending">Pending</option>
+          <option value="arrived">Arrived</option>
+          <option value="in_transit">In Transit</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Date & Time (Optional)</label>
+        <input class="form-input" type="datetime-local" id="cpTime" />
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">
+        <i class="fas fa-plus"></i> Add Checkpoint
+      </button>
+    </form>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  // Password toggle
+  function togglePw() {
+    const inp = document.getElementById('adminPassword');
+    const eye = document.getElementById('pwEye');
+    if (inp.type === 'password') { inp.type = 'text'; eye.innerHTML = '<i class="fas fa-eye-slash"></i>'; }
+    else { inp.type = 'password'; eye.innerHTML = '<i class="fas fa-eye"></i>'; }
+  }
+
+  // Reset form
+  function resetForm() {
+    document.getElementById('shipmentForm')?.reset();
+    document.getElementById('generatedTrackingId')?.classList.remove('visible');
+  }
+
+  // Admin track
+  function adminTrack() {
+    const id = document.getElementById('adminTrackInput')?.value.trim();
+    if (id) window.open(`../tracking/index.html?id=${encodeURIComponent(id)}`, '_blank');
+  }
+
+  // Export shipments (CSV)
+  function exportShipments() {
+    showToastGlobal('Export started — CSV will download shortly', 'success');
+  }
+
+  // Global toast (used in settings before module loads)
+  function showToastGlobal(msg, type='success') {
+    let c = document.getElementById('toastContainer');
+    if (!c) { c = document.createElement('div'); c.id = 'toastContainer'; c.className = 'toast-container'; document.body.appendChild(c); }
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    const icons = { success: 'fa-check-circle', error: 'fa-times-circle', warning: 'fa-exclamation-triangle' };
+    t.innerHTML = `<i class="fas ${icons[type] || icons.success}"></i><span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.style.animation = 'toastIn 0.4s reverse'; setTimeout(() => t.remove(), 400); }, 3500);
+  }
+
+  // Sidebar mobile toggle
+  if (window.innerWidth < 768) {
+    document.getElementById('sidebarToggle').style.display = 'flex';
+  }
+
+  // Analytics charts mirror
+  window.addEventListener('DOMContentLoaded', () => {
+    const c2 = document.getElementById('deliveryChart2');
+    if (c2 && typeof Chart !== 'undefined') {
+      new Chart(c2, {
+        type: 'bar',
+        data: {
+          labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+          datasets: [{
+            label: 'Deliveries',
+            data: [24,38,29,45,52,18,12],
+            backgroundColor: 'rgba(27,79,216,0.7)',
+            borderRadius: 6
+          },{
+            label: 'Pickups',
+            data: [18,30,22,38,44,15,10],
+            backgroundColor: 'rgba(245,158,11,0.7)',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } },
+          scales: { y: { beginAtZero: true }, x: { grid: { display: false } } }
+        }
+      });
+    }
+  });
+</script>
+<script type="module" src="../js/admin.js"></script>
+</body>
+</html>
